@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Canvas & Context ---
     const canvas = document.getElementById('simulationCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('d');
     canvas.width = 800;
     canvas.height = 400;
 
@@ -22,8 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GLUCOSE_RADIUS = 3;
     const GLUCOSE_SPEED = 1.0;
 
-    // --- Wall Parameters (可在此處調整幅度) ---
-    // [Amplitude, Frequency]
+    // --- Wall Parameters ---
     const PLICAE_PARAMS = [80, 0.05]; 
     const VILLI_PARAMS = [25, 0.3];  
     const MICROVILLI_PARAMS = [7, 1.2]; 
@@ -41,71 +40,67 @@ document.addEventListener('DOMContentLoaded', () => {
             this.points = this.generatePoints();
         }
 
-        // ======================= NEWEST PERPENDICULAR LOGIC START =======================
+        // ======================= CORRECTED HIERARCHICAL LOGIC START =======================
         generatePoints() {
             if (this.mode === 'flat') {
                 return [{x: 0, y: BASE_WALL_Y}, {x: canvas.width, y: BASE_WALL_Y}];
             }
         
             const finalPoints = [];
-            const step = 2; // Step for calculation, smaller is more precise but slower
+            const step = 2;
             const wave = (x, amp, freq) => amp * ((1 - Math.cos(x * freq)) / 2);
         
-            // Store the previous point of each layer to calculate the slope
-            let prev_layer1_point = { x: 0, y: BASE_WALL_Y }; // Plicae surface
-            let prev_layer2_point = { x: 0, y: BASE_WALL_Y }; // Villi surface
+            let prev_layer1_point = { x: 0, y: BASE_WALL_Y };
+            let prev_layer2_point = { x: 0, y: BASE_WALL_Y };
         
             finalPoints.push({ x: 0, y: BASE_WALL_Y });
         
             for (let x = step; x <= canvas.width; x += step) {
                 // --- Layer 1: Plicae surface ---
-                let layer1_point = { x: x, y: BASE_WALL_Y - wave(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]) };
-                if (this.mode === 'plicae') {
-                    finalPoints.push(layer1_point);
-                    prev_layer1_point = layer1_point;
-                    continue;
+                let layer1_point = { x: x, y: BASE_WALL_Y };
+                if (this.mode === 'plicae' || this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
+                    layer1_point.y -= wave(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]);
                 }
-        
-                // --- Layer 2: Villi surface (protruding from Layer 1) ---
-                const slope_layer1 = (layer1_point.y - prev_layer1_point.y) / (layer1_point.x - prev_layer1_point.x);
-                const angle1 = Math.atan(slope_layer1);
-                const normalAngle1 = angle1 - Math.PI / 2;
-                const offset1 = wave(x, VILLI_PARAMS[0], VILLI_PARAMS[1]);
                 
-                let layer2_point = {
-                    x: layer1_point.x + offset1 * Math.cos(normalAngle1),
-                    y: layer1_point.y + offset1 * Math.sin(normalAngle1)
-                };
+                let finalPointForIteration = layer1_point;
 
-                if (this.mode === 'plicae_villi') {
-                    finalPoints.push(layer2_point);
-                    prev_layer1_point = layer1_point;
-                    prev_layer2_point = layer2_point;
-                    continue;
+                // --- Layer 2: Villi surface (protruding from Layer 1) ---
+                let layer2_point = layer1_point;
+                if (this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
+                    const slope_layer1 = (layer1_point.y - prev_layer1_point.y) / (layer1_point.x - prev_layer1_point.x);
+                    const angle1 = Math.atan(slope_layer1);
+                    const normalAngle1 = angle1 - Math.PI / 2;
+                    const offset1 = wave(x, VILLI_PARAMS[0], VILLI_PARAMS[1]);
+                    
+                    layer2_point = {
+                        x: layer1_point.x + offset1 * Math.cos(normalAngle1),
+                        y: layer1_point.y + offset1 * Math.sin(normalAngle1)
+                    };
+                    finalPointForIteration = layer2_point;
                 }
-        
+
                 // --- Layer 3: Microvilli surface (protruding from Layer 2) ---
-                const slope_layer2 = (layer2_point.y - prev_layer2_point.y) / (layer2_point.x - prev_layer2_point.x);
-                const angle2 = Math.atan(slope_layer2);
-                const normalAngle2 = angle2 - Math.PI / 2;
-                const offset2 = wave(x, MICROVILLI_PARAMS[0], MICROVILLI_PARAMS[1]);
-
-                let finalPoint = {
-                    x: layer2_point.x + offset2 * Math.cos(normalAngle2),
-                    y: layer2_point.y + offset2 * Math.sin(normalAngle2)
-                };
-
                 if (this.mode === 'plicae_villi_micro') {
-                    finalPoints.push(finalPoint);
+                    const slope_layer2 = (layer2_point.y - prev_layer2_point.y) / (layer2_point.x - prev_layer2_point.x);
+                    const angle2 = isFinite(slope_layer2) ? Math.atan(slope_layer2) : (layer2_point.y > prev_layer2_point.y ? Math.PI / 2 : -Math.PI / 2);
+                    const normalAngle2 = angle2 - Math.PI / 2;
+                    const offset2 = wave(x, MICROVILLI_PARAMS[0], MICROVILLI_PARAMS[1]);
+
+                    const layer3_point = {
+                        x: layer2_point.x + offset2 * Math.cos(normalAngle2),
+                        y: layer2_point.y + offset2 * Math.sin(normalAngle2)
+                    };
+                    finalPointForIteration = layer3_point;
                 }
 
-                // Update previous points for the next iteration's slope calculation
+                finalPoints.push(finalPointForIteration);
+
                 prev_layer1_point = layer1_point;
                 prev_layer2_point = layer2_point;
             }
             return finalPoints;
         }
-        // ======================= NEWEST PERPENDICULAR LOGIC END =======================
+        // ======================= CORRECTED HIERARCHICAL LOGIC END =======================
 
         draw() {
             ctx.fillStyle = '#DC7864';
@@ -113,21 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.moveTo(0, canvas.height);
             ctx.lineTo(0, BASE_WALL_Y);
             this.points.forEach(p => ctx.lineTo(p.x, p.y));
-            ctx.lineTo(canvas.width, BASE_WALL_Y);
+            ctx.lineTo(canvas.width, this.points[this.points.length-1].y);
             ctx.lineTo(canvas.width, canvas.height);
             ctx.closePath();
             ctx.fill();
         }
 
         checkCollision(glucose) {
-            // Use a simplified but effective check for performance
-            const x_index = Math.round(glucose.x / 2); // Match the step used in generatePoints
+            const x_index = Math.round(glucose.x / 2);
             if (x_index >= 0 && x_index < this.points.length) {
                 const wallPoint = this.points[x_index];
                 if (wallPoint) {
                     const dx = glucose.x - wallPoint.x;
                     const dy = glucose.y - wallPoint.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < glucose.radius + 3) { // Use a slightly larger radius for better collision
+                    if (Math.sqrt(dx * dx + dy * dy) < glucose.radius + 3) {
                         return true;
                     }
                 }
@@ -196,17 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setSimulationMode(mode) {
-        // ... (The rest of the file is unchanged)
         if (!MODES[mode]) return;
         
         stopSimulation();
-        // A hack to make mode keys like 'plicae_villi' work with .includes()
-        let modeKey = mode;
-        if(mode === 'plicae') modeKey = 'plicae';
-        if(mode === 'plicae_villi') modeKey = 'plicae villi';
-        if(mode === 'plicae_villi_micro') modeKey = 'plicae villi microvilli';
-
-        currentWall = new IntestinalWall(modeKey);
+        // The bad "hack" is removed. Pass the original mode name directly.
+        currentWall = new IntestinalWall(mode); 
         modeSpan.textContent = MODES[mode].name;
         areaSpan.textContent = currentWall.getSurfaceArea();
         
@@ -236,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const modesToTest = ['flat', 'plicae', 'plicae_villi', 'plicae_villi_micro'];
-    let currentTestIndex = 0;
 
     function runTestForMode(index) {
         if (index >= modesToTest.length) {
@@ -248,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const modeId = modesToTest[index];
-        currentTestIndex = index;
         
         document.querySelectorAll('#resultsTable tbody tr').forEach((tr, i) => {
             tr.classList.toggle('running', i === index);
@@ -270,7 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
         allControlButtons.forEach(btn => btn.disabled = true);
         
         modesToTest.forEach(id => {
-            document.getElementById(`result-${id}`).textContent = "---";
+            const resultId = id.replace(/_/g, '-');
+            document.getElementById(`result-${resultId}`).textContent = "---";
         });
         
         runTestForMode(0);
@@ -302,5 +289,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('homeBtn').addEventListener('click', () => alert('這是回到首頁'));
     document.getElementById('nextBtn').addEventListener('click', () => alert('恭喜你答對了！即將前往下一頁！'));
 
-    setSimulationMode('flat');
-});
+    // Also fixed a bug in the auto-recorder
