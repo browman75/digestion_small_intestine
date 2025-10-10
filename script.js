@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // [Amplitude, Frequency]
     // 振幅現在表示向外凸出的程度
     const PLICAE_PARAMS = [200, 0.05]; // 環狀褶皺
-    const VILLI_PARAMS = [40, 0.3];  // 絨毛
-    const MICROVILLI_PARAMS = [10, 0.3]; // 微絨毛
+    const VILLI_PARAMS = [25, 0.5];  // 絨毛
+    const MICROVILLI_PARAMS = [5, 2.0]; // 微絨毛
 
     const MODES = {
         'flat': { name: '平面' },
