@@ -26,9 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const GLUCOSE_SPEED = 1.0;
 
     // --- Wall Parameters ---
-    const PLICAE_PARAMS = [80, 0.09];
-    const VILLI_PARAMS = [25, 0.6];
-    const MICROVILLI_PARAMS = [7, 2.5];
+    const PLICAE_PARAMS = [200, 0.09];
+    const VILLI_PARAMS = [25, 0.09];
+    const MICROVILLI_PARAMS = [7, 0.09];
 
     const MODES = {
         'flat': { name: '平面' },
