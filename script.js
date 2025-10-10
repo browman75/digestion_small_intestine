@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Wall Parameters (可在此處調整幅度) ---
     // [Amplitude, Frequency]
-    const PLICAE_PARAMS = [80, 0.05]; 
-    const VILLI_PARAMS = [25, 0.3];  
-    const MICROVILLI_PARAMS = [7, 1.2]; 
+    const PLICAE_PARAMS = [100, 0.05]; 
+    const VILLI_PARAMS = [30, 0.3];  
+    const MICROVILLI_PARAMS = [10, 1.2]; 
 
     const MODES = {
         'flat': { name: '平面' },
