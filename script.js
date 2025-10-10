@@ -31,9 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Wall Parameters (MODIFIED FOR GREATER EFFECT) ---
     // [Amplitude, Frequency]
-    const PLICAE_PARAMS = [70, 0.05]; // 環狀褶皺 (振幅從 40 -> 70)
-    const VILLI_PARAMS = [25, 0.3];  // 絨毛 (振幅從 15 -> 25)
-    const MICROVILLI_PARAMS = [7, 1.2]; // 微絨毛 (振幅從 4 -> 7)
+    const PLICAE_PARAMS = [140, 0.05]; // 環狀褶皺 (振幅從 40 -> 70)
+    const VILLI_PARAMS = [30, 0.3];  // 絨毛 (振幅從 15 -> 25)
+    const MICROVILLI_PARAMS = [10, 1.2]; // 微絨毛 (振幅從 4 -> 7)
 
     const MODES = {
         'flat': { name: '平面' },
