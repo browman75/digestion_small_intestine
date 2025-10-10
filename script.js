@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Canvas & Context ---
     const canvas = document.getElementById('simulationCanvas');
-    // FIX 1: Corrected 'd' to '2d' for proper canvas rendering context
     const ctx = canvas.getContext('2d');
     canvas.width = 800;
     canvas.height = 400;
@@ -23,10 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const GLUCOSE_RADIUS = 3;
     const GLUCOSE_SPEED = 1.0;
 
-    // --- Wall Parameters ---
-    const PLICAE_PARAMS = [80, 0.05]; 
-    const VILLI_PARAMS = [25, 0.3];  
-    const MICROVILLI_PARAMS = [7, 1.2]; 
+    // --- Wall Parameters (已增加褶皺數) ---
+    // [Amplitude, Frequency]
+    const PLICAE_PARAMS = [80, 0.09];     // 環狀褶皺 (頻率更高，褶皺更多)
+    const VILLI_PARAMS = [25, 0.6];      // 絨毛 (頻率更高，更密集)
+    const MICROVILLI_PARAMS = [7, 2.5];    // 微絨毛 (頻率更高，極度密集)
 
     const MODES = {
         'flat': { name: '平面' },
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.points = this.generatePoints();
         }
 
-        // ======================= FIX 2: FULLY REBUILT HIERARCHICAL LOGIC =======================
         generatePoints() {
             if (this.mode === 'flat') {
                 return [{x: 0, y: BASE_WALL_Y}, {x: canvas.width, y: BASE_WALL_Y}];
@@ -57,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
             finalPoints.push({ x: 0, y: BASE_WALL_Y });
         
             for (let x = step; x <= canvas.width; x += step) {
-                // --- Layer 1: Base plicae surface ---
                 let layer1_point = { x: x, y: BASE_WALL_Y };
                 if (this.mode === 'plicae' || this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
                     layer1_point.y -= wave(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]);
@@ -66,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let point_for_this_iteration = layer1_point;
                 let layer2_point = layer1_point;
 
-                // --- Layer 2: Villi protruding from Layer 1 ---
                 if (this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
                     const slope1 = (layer1_point.y - prev_layer1_point.y) / (layer1_point.x - prev_layer1_point.x);
                     const angle1 = Math.atan(slope1);
@@ -80,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     point_for_this_iteration = layer2_point;
                 }
 
-                // --- Layer 3: Microvilli protruding from Layer 2 ---
                 if (this.mode === 'plicae_villi_micro') {
                     const slope2 = (layer2_point.y - prev_layer2_point.y) / (layer2_point.x - prev_layer2_point.x);
                     const angle2 = isFinite(slope2) ? Math.atan(slope2) : (layer2_point.y > prev_layer2_point.y ? Math.PI / 2 : -Math.PI / 2);
@@ -95,8 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 finalPoints.push(point_for_this_iteration);
-
-                // Correctly update previous points for the next iteration's slope calculation
                 prev_layer1_point = layer1_point;
                 prev_layer2_point = layer2_point;
             }
@@ -119,26 +113,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fill();
         }
 
-        // ======================= FIX 3: ROBUST COLLISION DETECTION =======================
         checkCollision(glucose) {
             for (let i = 0; i < this.points.length - 1; i++) {
                 const p1 = this.points[i];
                 const p2 = this.points[i + 1];
         
-                // Bounding box check for performance
                 if (glucose.x < Math.min(p1.x, p2.x) - glucose.radius || glucose.x > Math.max(p1.x, p2.x) + glucose.radius ||
                     glucose.y < Math.min(p1.y, p2.y) - glucose.radius || glucose.y > Math.max(p1.y, p2.y) + glucose.radius) {
                     continue;
                 }
         
-                // Precise distance from point to line segment
                 const dx = p2.x - p1.x;
                 const dy = p2.y - p1.y;
                 const l2 = dx * dx + dy * dy;
         
                 if (l2 === 0) {
-                    const distToPoint = Math.hypot(glucose.x - p1.x, glucose.y - p1.y);
-                    if (distToPoint < glucose.radius) return true;
+                    if (Math.hypot(glucose.x - p1.x, glucose.y - p1.y) < glucose.radius) return true;
                     continue;
                 }
         
@@ -147,9 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
                 const closestX = p1.x + t * dx;
                 const closestY = p1.y + t * dy;
-                const distToSegment = Math.hypot(glucose.x - closestX, glucose.y - closestY);
                 
-                if (distToSegment < glucose.radius) {
+                if (Math.hypot(glucose.x - closestX, glucose.y - closestY) < glucose.radius) {
                     return true;
                 }
             }
@@ -174,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const highestPoint = BASE_WALL_Y - (PLICAE_PARAMS[0] + VILLI_PARAMS[0] + MICROVILLI_PARAMS[0]);
             this.y = Math.random() * (highestPoint - 50); 
             if (this.y < this.radius) this.y = this.radius + Math.random() * 50;
-            
             this.vx = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
             this.vy = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
         }
@@ -264,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setSimulationMode(modeId);
         setTimeout(() => {
             stopSimulation();
-            document.getElementById(`result-${modeId.replace(/_/g, '-')}`).textContent = absorbedCount;
+            // FIX: Removed the faulty .replace() to correctly find the element ID
+            document.getElementById(`result-${modeId}`).textContent = absorbedCount;
             runTestForMode(index + 1);
         }, 10000);
     }
@@ -274,7 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startRecordBtn.disabled = true;
         allControlButtons.forEach(btn => btn.disabled = true);
         modesToTest.forEach(id => {
-            document.getElementById(`result-${id.replace(/_/g, '-')}`).textContent = "---";
+            // FIX: Removed the faulty .replace() here as well
+            document.getElementById(`result-${id}`).textContent = "---";
         });
         runTestForMode(0);
     });
