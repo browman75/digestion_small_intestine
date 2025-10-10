@@ -32,9 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Wall Parameters (MODIFIED for upward protrusions) ---
     // [Amplitude, Frequency]
     // 振幅現在表示向外凸出的程度
-    const PLICAE_PARAMS = [70, 0.05]; // 環狀褶皺
-    const VILLI_PARAMS = [25, 0.3];  // 絨毛
-    const MICROVILLI_PARAMS = [7, 1.2]; // 微絨毛
+    const PLICAE_PARAMS = [100, 0.5]; // 環狀褶皺
+    const VILLI_PARAMS = [30, 0.3];  // 絨毛
+    const MICROVILLI_PARAMS = [10, 2]; // 微絨毛
 
     const MODES = {
         'flat': { name: '平面' },
