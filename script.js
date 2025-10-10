@@ -31,9 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Wall Parameters ---
     // [Amplitude, Frequency]
-    const PLICAE_PARAMS = [70, 0.05]; // 環狀褶皺
-    const VILLI_PARAMS = [25, 0.3];  // 絨毛
-    const MICROVILLI_PARAMS = [7, 1.2]; // 微絨毛
+    const PLICAE_PARAMS = [200, 0.05]; // 環狀褶皺
+    const VILLI_PARAMS = [50, 0.05];  // 絨毛
+    const MICROVILLI_PARAMS = [10, 0.05]; // 微絨毛
 
     const MODES = {
         'flat': { name: '平面' },
