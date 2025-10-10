@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const allControlButtons = document.querySelectorAll('.controls button');
 
     // --- Simulation Constants ---
-    const BASE_WALL_Y = 300; // 小腸壁的基礎 Y 座標，所有褶皺都從此處向上凸起
+    const BASE_WALL_Y = 100; // 小腸壁的基礎 Y 座標，所有褶皺都從此處向上凸起
     const NUM_GLUCOSE = 150;
     const GLUCOSE_RADIUS = 3;
     const GLUCOSE_SPEED = 1.0;
