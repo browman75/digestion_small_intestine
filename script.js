@@ -120,19 +120,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Main Simulation Loop ---
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentWall.draw();
         
-        glucoseMolecules.forEach((glucose, i) => {
+        // ======================= FIX START =======================
+        // Iterate backwards to safely remove elements from the array
+        for (let i = glucoseMolecules.length - 1; i >= 0; i--) {
+            const glucose = glucoseMolecules[i];
             glucose.move();
             glucose.draw();
+            
             if (currentWall.checkCollision(glucose)) {
-                glucoseMolecules.splice(i, 1);
+                glucoseMolecules.splice(i, 1); // This is now safe
                 absorbedCount++;
                 countSpan.textContent = absorbedCount;
             }
-        });
+        }
+        // ======================== FIX END ========================
+
         animationFrameId = requestAnimationFrame(gameLoop);
     }
 
