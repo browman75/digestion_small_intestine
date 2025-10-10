@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小腸吸收模擬器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>小腸絨毛與吸收效率模擬器</h1>
+        <p>觀察不同小腸壁結構下，葡萄糖分子的吸收效率差異。</p>
+
+        <div class="controls">
+            <button id="flatBtn">模式一：無絨毛</button>
+            <button id="villiBtn">模式二：有絨毛</button>
+            <button id="microvilliBtn">模式三：絨毛+微絨毛</button>
+            <button id="resetBtn">重設模擬</button>
+        </div>
+
+        <canvas id="simulationCanvas"></canvas>
+        
+        <div id="stats">
+            <p>目前模式：<span id="currentMode">無</span></p>
+            <p>相對表面積：<span id="surfaceArea">0</span></p>
+            <p>已吸收分子數：<span id="absorbedCount">0</span></p>
+        </div>
+
+        <hr>
+
+        <div class="quiz-section">
+            <h2>學習測驗</h2>
+            <p>請根據模擬結果，完成以下問題以解鎖「下一頁」。</p>
+
+            <div class="question" id="q1">
+                <label>1. 請將三種模式依據吸收效率由高至低排序：</label>
+                <div class="answer-slots">
+                    <select id="q1-ans1">
+                        <option value="">選擇答案</option>
+                        <option value="flat">無絨毛</option>
+                        <option value="villi">絨毛</option>
+                        <option value="villi_micro">絨毛+微絨毛</option>
+                    </select>
+                    <span>&gt;</span>
+                    <select id="q1-ans2">
+                        <option value="">選擇答案</option>
+                        <option value="flat">無絨毛</option>
+                        <option value="villi">絨毛</option>
+                        <option value="villi_micro">絨毛+微絨毛</option>
+                    </select>
+                    <span>&gt;</span>
+                    <select id="q1-ans3">
+                        <option value="">選擇答案</option>
+                        <option value="flat">無絨毛</option>
+                        <option value="villi">絨毛</option>
+                        <option value="villi_micro">絨毛+微絨毛</option>
+                    </select>
+                    <span id="q1-feedback"></span>
+                </div>
+            </div>
+
+            <div class="question" id="q2">
+                <label for="q2-ans">2. 根據以上結果，增加小腸表面積</label>
+                <select id="q2-ans">
+                    <option value="">請選擇</option>
+                    <option value="helpful">有助於</option>
+                    <option value="unhelpful">無助於</option>
+                    <option value="unrelated">沒有關聯</option>
+                </select>
+                <label>提升吸收效率。</label>
+                <span id="q2-feedback"></span>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button id="prevBtn">上一頁</button>
+            <button id="homeBtn">回到首頁</button>
+            <button id="nextBtn" disabled>下一頁</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
