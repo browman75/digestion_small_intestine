@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const BASE_WALL_Y = 300; // 小腸壁的基礎 Y 座標，所有褶皺都從此處向上凸起
     const NUM_GLUCOSE = 5000;
     const GLUCOSE_RADIUS = 0.5;
-    const GLUCOSE_SPEED = 0.5;
+    const GLUCOSE_SPEED = 0.8;
 
     // --- Simulation State ---
     let glucoseMolecules = [];
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 振幅現在表示向外凸出的程度
     const PLICAE_PARAMS = [200, 0.05]; // 環狀褶皺
     const VILLI_PARAMS = [25, 0.5];  // 絨毛
-    const MICROVILLI_PARAMS = [3, 0.5]; // 微絨毛
+    const MICROVILLI_PARAMS = [7, 1.0]; // 微絨毛
 
     const MODES = {
         'flat': { name: '平面' },
