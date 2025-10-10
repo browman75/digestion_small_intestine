@@ -21,9 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Simulation Constants ---
     const BASE_WALL_Y = 320; 
-    const NUM_GLUCOSE = 150;
-    const GLUCOSE_RADIUS = 3;
-    const GLUCOSE_SPEED = 1.0;
+    const NUM_GLUCOSE = 2000;
+    const GLUCOSE_RADIUS = 0.5;
+    const GLUCOSE_SPEED = 4.0;
 
     // --- Wall Parameters ---
     const PLICAE_PARAMS = [200, 0.09];
