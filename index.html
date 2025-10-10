@@ -3,28 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小腸吸收模擬器</title>
+    <title>進階小腸吸收模擬器</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <h1>小腸絨毛與吸收效率模擬器</h1>
-        <p>觀察不同小腸壁結構下，葡萄糖分子的吸收效率差異。</p>
+    <div class="main-container">
+        <h1>進階小腸吸收模擬器</h1>
+        <p>觀察小腸壁不同層級的結構（環狀褶皺、絨毛、微絨毛）如何大幅增加吸收效率。</p>
 
-        <div class="controls">
-            <button id="flatBtn">模式一：無絨毛</button>
-            <button id="villiBtn">模式二：有絨毛</button>
-            <button id="microvilliBtn">模式三：絨毛+微絨毛</button>
-            <button id="resetBtn">重設模擬</button>
-        </div>
+        <div class="content-wrapper">
+            <div class="simulation-area">
+                <div class="controls">
+                    <button id="mode1Btn">模式一：平面</button>
+                    <button id="mode2Btn">模式二：環狀褶皺</button>
+                    <button id="mode3Btn">模式三：褶皺+絨毛</button>
+                    <button id="mode4Btn">模式四：褶皺+絨毛+微絨毛</button>
+                </div>
+                <canvas id="simulationCanvas"></canvas>
+                <div id="stats">
+                    <p>目前模式：<span id="currentMode">無</span></p>
+                    <p>相對表面積：<span id="surfaceArea">0</span></p>
+                    <p>已吸收分子數：<span id="absorbedCount">0</span></p>
+                    <p>計時：<span id="timer">0.0</span> s</p>
+                </div>
+            </div>
 
-        <canvas id="simulationCanvas"></canvas>
-        
-        <div id="stats">
-            <p>目前模式：<span id="currentMode">無</span></p>
-            <p>相對表面積：<span id="surfaceArea">0</span></p>
-            <p>已吸收分子數：<span id="absorbedCount">0</span></p>
+            <div class="results-area">
+                <h2>自動記錄表</h2>
+                <button id="startRecordBtn">開始自動記錄 (40秒)</button>
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>模式</th>
+                            <th>10秒內吸收分子數</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>平面</td>
+                            <td id="result-flat">---</td>
+                        </tr>
+                        <tr>
+                            <td>環狀褶皺</td>
+                            <td id="result-plicae">---</td>
+                        </tr>
+                        <tr>
+                            <td>褶皺+絨毛</td>
+                            <td id="result-plicae_villi">---</td>
+                        </tr>
+                        <tr>
+                            <td>褶皺+絨毛+微絨毛</td>
+                            <td id="result-plicae_villi_micro">---</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p id="record-status"></p>
+            </div>
         </div>
 
         <hr>
@@ -34,34 +69,17 @@
             <p>請根據模擬結果，完成以下問題以解鎖「下一頁」。</p>
 
             <div class="question" id="q1">
-                <label>1. 請將三種模式依據吸收效率由高至低排序：</label>
+                <label>1. 請將四種模式依據吸收效率由高至低排序：</label>
                 <div class="answer-slots">
-                    <select id="q1-ans1">
-                        <option value="">選擇答案</option>
-                        <option value="flat">無絨毛</option>
-                        <option value="villi">絨毛</option>
-                        <option value="villi_micro">絨毛+微絨毛</option>
-                    </select>
-                    <span>&gt;</span>
-                    <select id="q1-ans2">
-                        <option value="">選擇答案</option>
-                        <option value="flat">無絨毛</option>
-                        <option value="villi">絨毛</option>
-                        <option value="villi_micro">絨毛+微絨毛</option>
-                    </select>
-                    <span>&gt;</span>
-                    <select id="q1-ans3">
-                        <option value="">選擇答案</option>
-                        <option value="flat">無絨毛</option>
-                        <option value="villi">絨毛</option>
-                        <option value="villi_micro">絨毛+微絨毛</option>
-                    </select>
-                    <span id="q1-feedback"></span>
+                    <select id="q1-ans1"><option value="">選擇</option><option value="flat">平面</option><option value="plicae">環狀褶皺</option><option value="plicae_villi">褶皺+絨毛</option><option value="plicae_villi_micro">褶皺+絨毛+微絨毛</option></select> >
+                    <select id="q1-ans2"><option value="">選擇</option><option value="flat">平面</option><option value="plicae">環狀褶皺</option><option value="plicae_villi">褶皺+絨毛</option><option value="plicae_villi_micro">褶皺+絨毛+微絨毛</option></select> >
+                    <select id="q1-ans3"><option value="">選擇</option><option value="flat">平面</option><option value="plicae">環狀褶皺</option><option value="plicae_villi">褶皺+絨毛</option><option value="plicae_villi_micro">褶皺+絨毛+微絨毛</option></select> >
+                    <select id="q1-ans4"><option value="">選擇</option><option value="flat">平面</option><option value="plicae">環狀褶皺</option><option value="plicae_villi">褶皺+絨毛</option><option value="plicae_villi_micro">褶皺+絨毛+微絨毛</option></select>
                 </div>
             </div>
 
             <div class="question" id="q2">
-                <label for="q2-ans">2. 根據以上結果，增加小腸表面積</label>
+                <label for="q2-ans">2. 結論：增加小腸表面積</label>
                 <select id="q2-ans">
                     <option value="">請選擇</option>
                     <option value="helpful">有助於</option>
@@ -69,7 +87,6 @@
                     <option value="unrelated">沒有關聯</option>
                 </select>
                 <label>提升吸收效率。</label>
-                <span id="q2-feedback"></span>
             </div>
         </div>
 
