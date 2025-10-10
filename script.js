@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.width = 800;
     canvas.height = 400;
 
-    // --- DOM Elements ---
+    // --- DOM Elements & State ---
     const modeSpan = document.getElementById('currentMode');
     const areaSpan = document.getElementById('surfaceArea');
     const countSpan = document.getElementById('absorbedCount');
@@ -13,27 +13,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const startRecordBtn = document.getElementById('startRecordBtn');
     const recordStatus = document.getElementById('record-status');
     const allControlButtons = document.querySelectorAll('.controls button');
+    let glucoseMolecules = [], currentWall = null, absorbedCount = 0;
+    let animationFrameId, timerInterval, elapsedTime = 0, isAutoRecording = false;
 
     // --- Simulation Constants ---
-    const BASE_WALL_Y = 300; // 小腸壁的基礎 Y 座標
-    const NUM_GLUCOSE = 1000;
-    const GLUCOSE_RADIUS = 1;
-    const GLUCOSE_SPEED = 3.0;
+    const BASE_WALL_Y = 320; 
+    const NUM_GLUCOSE = 150;
+    const GLUCOSE_RADIUS = 3;
+    const GLUCOSE_SPEED = 1.0;
 
-    // --- Simulation State ---
-    let glucoseMolecules = [];
-    let currentWall = null;
-    let absorbedCount = 0;
-    let animationFrameId;
-    let timerInterval;
-    let elapsedTime = 0;
-    let isAutoRecording = false;
-    
-    // --- Wall Parameters ---
+    // --- Wall Parameters (可在此處調整幅度) ---
     // [Amplitude, Frequency]
-    const PLICAE_PARAMS = [200, 0.05]; // 環狀褶皺
-    const VILLI_PARAMS = [50, 0.05];  // 絨毛
-    const MICROVILLI_PARAMS = [10, 0.05]; // 微絨毛
+    const PLICAE_PARAMS = [80, 0.05]; 
+    const VILLI_PARAMS = [25, 0.3];  
+    const MICROVILLI_PARAMS = [7, 1.2]; 
 
     const MODES = {
         'flat': { name: '平面' },
@@ -48,47 +41,64 @@ document.addEventListener('DOMContentLoaded', () => {
             this.points = this.generatePoints();
         }
 
-        // ======================= REFACTORED LOGIC START =======================
-        // 重構此函式以更清晰地反映層級結構
+        // ======================= NEW PERPENDICULAR LOGIC START =======================
         generatePoints() {
-            const points = [];
-            for (let x = 0; x <= canvas.width; x++) {
+            const finalPoints = [];
+            const step = 2; // Increase step for performance with complex calculations
+
+            // Helper functions for wave shapes and their derivatives (for calculating slope)
+            const wave = (x, amp, freq) => amp * ((1 - Math.cos(x * freq)) / 2);
+            const waveDerivative = (x, amp, freq) => (amp * freq / 2) * Math.sin(x * freq);
+
+            for (let x = 0; x <= canvas.width; x += step) {
+                // --- Layer 1: Plicae (環狀褶皺) ---
+                let p_y = BASE_WALL_Y;
+                let p_slope = 0;
+                if (this.mode.includes('plicae')) {
+                    p_y -= wave(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]);
+                    p_slope -= waveDerivative(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]);
+                }
+
+                // --- Layer 2: Villi (絨毛) ---
+                let v_x = x;
+                let v_y = p_y;
+                let v_slope = p_slope;
+                if (this.mode.includes('villi')) {
+                    const villi_h = wave(x, VILLI_PARAMS[0], VILLI_PARAMS[1]);
+                    const angle = Math.atan(p_slope);
+                    const normalAngle = angle - Math.PI / 2; // Angle perpendicular to the slope
+                    
+                    v_x += villi_h * Math.cos(normalAngle);
+                    v_y += villi_h * Math.sin(normalAngle);
+
+                    // For the next layer, the slope is a combination of plicae and villi slopes
+                    v_slope += waveDerivative(x, VILLI_PARAMS[0], VILLI_PARAMS[1]);
+                }
+
+                // --- Layer 3: Microvilli (微絨毛) ---
+                let m_x = v_x;
+                let m_y = v_y;
+                if (this.mode.includes('microvilli')) {
+                    const microvilli_h = wave(x, MICROVILLI_PARAMS[0], MICROVILLI_PARAMS[1]);
+                    const angle = Math.atan(v_slope);
+                    const normalAngle = angle - Math.PI / 2;
+                    
+                    m_x += microvilli_h * Math.cos(normalAngle);
+                    m_y += microvilli_h * Math.sin(normalAngle);
+                }
                 
-                // 步驟一：從基礎 Y 座標開始
-                let finalY = BASE_WALL_Y;
-
-                // 步驟二：建立第一層表面 (環狀褶皺)
-                // 如果模式包含環狀褶皺，則在基礎上向上突起
-                if (this.mode === 'plicae' || this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
-                    const plicaeOffset = PLICAE_PARAMS[0] * ((1 - Math.cos(x * PLICAE_PARAMS[1])) / 2);
-                    finalY -= plicaeOffset;
-                }
-
-                // 步驟三：建立第二層表面 (絨毛)
-                // 如果模式包含絨毛，則在「上一步的表面線」上再次向上突起
-                if (this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
-                    const villiOffset = VILLI_PARAMS[0] * ((1 - Math.cos(x * VILLI_PARAMS[1])) / 2);
-                    finalY -= villiOffset;
-                }
-
-                // 步驟四：建立第三層表面 (微絨毛)
-                // 如果模式包含微絨毛，則在「上一步驟的最新表面線」上再次向上突起
-                if (this.mode === 'plicae_villi_micro') {
-                    const microvilliOffset = MICROVILLI_PARAMS[0] * ((1 - Math.cos(x * MICROVILLI_PARAMS[1])) / 2);
-                    finalY -= microvilliOffset;
-                }
-                
-                points.push({ x, y: finalY });
+                finalPoints.push({ x: m_x, y: m_y });
             }
-            return points;
+            return finalPoints;
         }
-        // ======================= REFACTORED LOGIC END =======================
+        // ======================= NEW PERPENDICULAR LOGIC END =======================
 
         draw() {
             ctx.fillStyle = '#DC7864';
             ctx.beginPath();
-            ctx.moveTo(0, this.points[0].y);
+            ctx.moveTo(0, BASE_WALL_Y);
             this.points.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.lineTo(canvas.width, BASE_WALL_Y);
             ctx.lineTo(canvas.width, canvas.height);
             ctx.lineTo(0, canvas.height);
             ctx.closePath();
@@ -96,9 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         checkCollision(glucose) {
-            if (glucose.x >= 0 && glucose.x < this.points.length) {
-                const wallY = this.points[Math.floor(glucose.x)].y;
-                return glucose.y + glucose.radius >= wallY;
+            // Simplified collision for performance, as the surface is now non-uniform in X
+            for (let i = 0; i < this.points.length - 1; i++) {
+                const p1 = this.points[i];
+                const p2 = this.points[i+1];
+                if (glucose.x > p1.x && glucose.x < p2.x) {
+                    // Check distance from particle to the line segment
+                    const dist = Math.abs((p2.y - p1.y) * glucose.x - (p2.x - p1.x) * glucose.y + p2.x * p1.y - p2.y * p1.x) /
+                                 Math.sqrt(Math.pow(p2.y - p1.y, 2) + Math.pow(p2.x - p1.x, 2));
+                    if (dist < glucose.radius) {
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -114,6 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    class Glucose { /* ... unchanged ... */ } // Remainder of the script is largely unchanged
+    // NOTE: The rest of the script (Glucose class, gameLoop, setSimulationMode, etc.)
+    // remains the same as the previous version. I am omitting it here for brevity,
+    // but the full code is required for the simulation to run.
     class Glucose {
         constructor() {
             this.radius = GLUCOSE_RADIUS;
