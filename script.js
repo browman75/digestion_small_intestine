@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Wall Parameters ---
     const PLICAE_PARAMS = [200, 0.09];
-    const VILLI_PARAMS = [25, 0.09];
-    const MICROVILLI_PARAMS = [7, 0.09];
+    const VILLI_PARAMS = [25, 10.0];
+    const MICROVILLI_PARAMS = [7, 10.0];
 
     const MODES = {
         'flat': { name: '平面' },
