@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#64B4FF';
+            ctx.fillStyle = '#9370DB';
             ctx.fill();
         }
     }
