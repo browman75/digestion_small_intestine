@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let elapsedTime = 0;
     let isAutoRecording = false;
     
-    // --- Wall Parameters ---
+    // --- Wall Parameters (MODIFIED FOR GREATER EFFECT) ---
     // [Amplitude, Frequency]
-    const PLICAE_PARAMS = [40, 0.05]; // 環狀褶皺
-    const VILLI_PARAMS = [15, 0.3];  // 絨毛
-    const MICROVILLI_PARAMS = [4, 1.2]; // 微絨毛
+    const PLICAE_PARAMS = [70, 0.05]; // 環狀褶皺 (振幅從 40 -> 70)
+    const VILLI_PARAMS = [25, 0.3];  // 絨毛 (振幅從 15 -> 25)
+    const MICROVILLI_PARAMS = [7, 1.2]; // 微絨毛 (振幅從 4 -> 7)
 
     const MODES = {
         'flat': { name: '平面' },
@@ -100,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor() {
             this.radius = GLUCOSE_RADIUS;
             this.x = Math.random() * canvas.width;
-            this.y = Math.random() * (WALL_Y_POSITION - 150);
+            // MODIFIED: Ensure molecules spawn above the highest folds
+            this.y = Math.random() * 100;
             this.vx = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
             this.vy = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
         }
@@ -109,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.x += this.vx;
             this.y += this.vy;
             if (this.x <= this.radius || this.x >= canvas.width - this.radius) this.vx *= -1;
-            if (this.y <= this.radius || this.y >= WALL_Y_POSITION - this.radius) this.vy *= -1;
+            // Removed the bottom boundary check to let molecules freely collide with the complex wall
+            if (this.y <= this.radius) this.vy *= -1;
         }
 
         draw() {
@@ -120,26 +122,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Main Simulation Loop ---
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         currentWall.draw();
         
-        // ======================= FIX START =======================
-        // Iterate backwards to safely remove elements from the array
         for (let i = glucoseMolecules.length - 1; i >= 0; i--) {
             const glucose = glucoseMolecules[i];
             glucose.move();
             glucose.draw();
             
             if (currentWall.checkCollision(glucose)) {
-                glucoseMolecules.splice(i, 1); // This is now safe
+                glucoseMolecules.splice(i, 1);
                 absorbedCount++;
                 countSpan.textContent = absorbedCount;
             }
         }
-        // ======================== FIX END ========================
-
         animationFrameId = requestAnimationFrame(gameLoop);
     }
 
@@ -176,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     }
 
-    // --- Auto Recording Logic ---
     const modesToTest = ['flat', 'plicae', 'plicae_villi', 'plicae_villi_micro'];
     let currentTestIndex = 0;
 
@@ -192,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const modeId = modesToTest[index];
         currentTestIndex = index;
         
-        // Highlight current running row
         document.querySelectorAll('#resultsTable tbody tr').forEach((tr, i) => {
             tr.classList.toggle('running', i === index);
         });
@@ -204,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopSimulation();
             document.getElementById(`result-${modeId}`).textContent = absorbedCount;
             runTestForMode(index + 1);
-        }, 10000); // Run for 10 seconds
+        }, 10000);
     }
 
     startRecordBtn.addEventListener('click', () => {
@@ -212,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startRecordBtn.disabled = true;
         allControlButtons.forEach(btn => btn.disabled = true);
         
-        // Clear previous results
         modesToTest.forEach(id => {
             document.getElementById(`result-${id}`).textContent = "---";
         });
@@ -220,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         runTestForMode(0);
     });
 
-    // --- Quiz Logic ---
     const quizSelects = document.querySelectorAll('.quiz-section select');
     const correctOrder = ['plicae_villi_micro', 'plicae_villi', 'plicae', 'flat'];
 
@@ -238,17 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     quizSelects.forEach(s => s.addEventListener('change', checkAnswers));
     
-    // --- Event Listeners for Manual Mode Selection ---
     document.getElementById('mode1Btn').addEventListener('click', () => setSimulationMode('flat'));
     document.getElementById('mode2Btn').addEventListener('click', () => setSimulationMode('plicae'));
     document.getElementById('mode3Btn').addEventListener('click', () => setSimulationMode('plicae_villi'));
     document.getElementById('mode4Btn').addEventListener('click', () => setSimulationMode('plicae_villi_micro'));
 
-    // --- Navigation Button Placeholders ---
     document.getElementById('prevBtn').addEventListener('click', () => alert('這是上一頁'));
     document.getElementById('homeBtn').addEventListener('click', () => alert('這是回到首頁'));
     document.getElementById('nextBtn').addEventListener('click', () => alert('恭喜你答對了！即將前往下一頁！'));
 
-    // --- Initial Load ---
     setSimulationMode('flat');
 });
