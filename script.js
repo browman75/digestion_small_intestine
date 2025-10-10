@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Canvas & Context ---
     const canvas = document.getElementById('simulationCanvas');
-    const ctx = canvas.getContext('d');
+    // FIX 1: Corrected 'd' to '2d' for proper canvas rendering context
+    const ctx = canvas.getContext('2d');
     canvas.width = 800;
     canvas.height = 400;
 
@@ -40,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.points = this.generatePoints();
         }
 
-        // ======================= CORRECTED HIERARCHICAL LOGIC START =======================
+        // ======================= FIX 2: FULLY REBUILT HIERARCHICAL LOGIC =======================
         generatePoints() {
             if (this.mode === 'flat') {
                 return [{x: 0, y: BASE_WALL_Y}, {x: canvas.width, y: BASE_WALL_Y}];
@@ -56,19 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
             finalPoints.push({ x: 0, y: BASE_WALL_Y });
         
             for (let x = step; x <= canvas.width; x += step) {
-                // --- Layer 1: Plicae surface ---
+                // --- Layer 1: Base plicae surface ---
                 let layer1_point = { x: x, y: BASE_WALL_Y };
                 if (this.mode === 'plicae' || this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
                     layer1_point.y -= wave(x, PLICAE_PARAMS[0], PLICAE_PARAMS[1]);
                 }
                 
-                let finalPointForIteration = layer1_point;
-
-                // --- Layer 2: Villi surface (protruding from Layer 1) ---
+                let point_for_this_iteration = layer1_point;
                 let layer2_point = layer1_point;
+
+                // --- Layer 2: Villi protruding from Layer 1 ---
                 if (this.mode === 'plicae_villi' || this.mode === 'plicae_villi_micro') {
-                    const slope_layer1 = (layer1_point.y - prev_layer1_point.y) / (layer1_point.x - prev_layer1_point.x);
-                    const angle1 = Math.atan(slope_layer1);
+                    const slope1 = (layer1_point.y - prev_layer1_point.y) / (layer1_point.x - prev_layer1_point.x);
+                    const angle1 = Math.atan(slope1);
                     const normalAngle1 = angle1 - Math.PI / 2;
                     const offset1 = wave(x, VILLI_PARAMS[0], VILLI_PARAMS[1]);
                     
@@ -76,13 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         x: layer1_point.x + offset1 * Math.cos(normalAngle1),
                         y: layer1_point.y + offset1 * Math.sin(normalAngle1)
                     };
-                    finalPointForIteration = layer2_point;
+                    point_for_this_iteration = layer2_point;
                 }
 
-                // --- Layer 3: Microvilli surface (protruding from Layer 2) ---
+                // --- Layer 3: Microvilli protruding from Layer 2 ---
                 if (this.mode === 'plicae_villi_micro') {
-                    const slope_layer2 = (layer2_point.y - prev_layer2_point.y) / (layer2_point.x - prev_layer2_point.x);
-                    const angle2 = isFinite(slope_layer2) ? Math.atan(slope_layer2) : (layer2_point.y > prev_layer2_point.y ? Math.PI / 2 : -Math.PI / 2);
+                    const slope2 = (layer2_point.y - prev_layer2_point.y) / (layer2_point.x - prev_layer2_point.x);
+                    const angle2 = isFinite(slope2) ? Math.atan(slope2) : (layer2_point.y > prev_layer2_point.y ? Math.PI / 2 : -Math.PI / 2);
                     const normalAngle2 = angle2 - Math.PI / 2;
                     const offset2 = wave(x, MICROVILLI_PARAMS[0], MICROVILLI_PARAMS[1]);
 
@@ -90,40 +91,66 @@ document.addEventListener('DOMContentLoaded', () => {
                         x: layer2_point.x + offset2 * Math.cos(normalAngle2),
                         y: layer2_point.y + offset2 * Math.sin(normalAngle2)
                     };
-                    finalPointForIteration = layer3_point;
+                    point_for_this_iteration = layer3_point;
                 }
 
-                finalPoints.push(finalPointForIteration);
+                finalPoints.push(point_for_this_iteration);
 
+                // Correctly update previous points for the next iteration's slope calculation
                 prev_layer1_point = layer1_point;
                 prev_layer2_point = layer2_point;
             }
             return finalPoints;
         }
-        // ======================= CORRECTED HIERARCHICAL LOGIC END =======================
 
         draw() {
             ctx.fillStyle = '#DC7864';
             ctx.beginPath();
             ctx.moveTo(0, canvas.height);
             ctx.lineTo(0, BASE_WALL_Y);
-            this.points.forEach(p => ctx.lineTo(p.x, p.y));
-            ctx.lineTo(canvas.width, this.points[this.points.length-1].y);
-            ctx.lineTo(canvas.width, canvas.height);
+            if (this.points.length > 0) {
+                this.points.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.lineTo(this.points[this.points.length-1].x, canvas.height);
+            } else {
+                 ctx.lineTo(canvas.width, BASE_WALL_Y);
+                 ctx.lineTo(canvas.width, canvas.height);
+            }
             ctx.closePath();
             ctx.fill();
         }
 
+        // ======================= FIX 3: ROBUST COLLISION DETECTION =======================
         checkCollision(glucose) {
-            const x_index = Math.round(glucose.x / 2);
-            if (x_index >= 0 && x_index < this.points.length) {
-                const wallPoint = this.points[x_index];
-                if (wallPoint) {
-                    const dx = glucose.x - wallPoint.x;
-                    const dy = glucose.y - wallPoint.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < glucose.radius + 3) {
-                        return true;
-                    }
+            for (let i = 0; i < this.points.length - 1; i++) {
+                const p1 = this.points[i];
+                const p2 = this.points[i + 1];
+        
+                // Bounding box check for performance
+                if (glucose.x < Math.min(p1.x, p2.x) - glucose.radius || glucose.x > Math.max(p1.x, p2.x) + glucose.radius ||
+                    glucose.y < Math.min(p1.y, p2.y) - glucose.radius || glucose.y > Math.max(p1.y, p2.y) + glucose.radius) {
+                    continue;
+                }
+        
+                // Precise distance from point to line segment
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const l2 = dx * dx + dy * dy;
+        
+                if (l2 === 0) {
+                    const distToPoint = Math.hypot(glucose.x - p1.x, glucose.y - p1.y);
+                    if (distToPoint < glucose.radius) return true;
+                    continue;
+                }
+        
+                let t = ((glucose.x - p1.x) * dx + (glucose.y - p1.y) * dy) / l2;
+                t = Math.max(0, Math.min(1, t));
+        
+                const closestX = p1.x + t * dx;
+                const closestY = p1.y + t * dy;
+                const distToSegment = Math.hypot(glucose.x - closestX, glucose.y - closestY);
+                
+                if (distToSegment < glucose.radius) {
+                    return true;
                 }
             }
             return false;
@@ -134,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < this.points.length - 1; i++) {
                 const p1 = this.points[i];
                 const p2 = this.points[i + 1];
-                length += Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+                length += Math.hypot(p2.x - p1.x, p2.y - p1.y);
             }
             return Math.round(length);
         }
@@ -191,17 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setSimulationMode(mode) {
         if (!MODES[mode]) return;
-        
         stopSimulation();
-        // The bad "hack" is removed. Pass the original mode name directly.
         currentWall = new IntestinalWall(mode); 
         modeSpan.textContent = MODES[mode].name;
         areaSpan.textContent = currentWall.getSurfaceArea();
-        
         glucoseMolecules = Array.from({ length: NUM_GLUCOSE }, () => new Glucose());
         absorbedCount = 0;
         countSpan.textContent = 0;
-        
         startTimer();
         animationFrameId = requestAnimationFrame(gameLoop);
     }
@@ -233,19 +256,15 @@ document.addEventListener('DOMContentLoaded', () => {
             allControlButtons.forEach(btn => btn.disabled = false);
             return;
         }
-        
         const modeId = modesToTest[index];
-        
         document.querySelectorAll('#resultsTable tbody tr').forEach((tr, i) => {
             tr.classList.toggle('running', i === index);
         });
-        
         recordStatus.textContent = `正在記錄：${MODES[modeId].name}...`;
         setSimulationMode(modeId);
-
         setTimeout(() => {
             stopSimulation();
-            document.getElementById(`result-${modeId}`).textContent = absorbedCount;
+            document.getElementById(`result-${modeId.replace(/_/g, '-')}`).textContent = absorbedCount;
             runTestForMode(index + 1);
         }, 10000);
     }
@@ -254,12 +273,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isAutoRecording = true;
         startRecordBtn.disabled = true;
         allControlButtons.forEach(btn => btn.disabled = true);
-        
         modesToTest.forEach(id => {
-            const resultId = id.replace(/_/g, '-');
-            document.getElementById(`result-${resultId}`).textContent = "---";
+            document.getElementById(`result-${id.replace(/_/g, '-')}`).textContent = "---";
         });
-        
         runTestForMode(0);
     });
 
@@ -275,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         const isQ1Correct = q1Selects.every((val, i) => val === correctOrder[i]);
         const isQ2Correct = document.getElementById('q2-ans').value === 'helpful';
-        
         nextBtn.disabled = !(isQ1Correct && isQ2Correct);
     }
     quizSelects.forEach(s => s.addEventListener('change', checkAnswers));
@@ -284,9 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mode2Btn').addEventListener('click', () => setSimulationMode('plicae'));
     document.getElementById('mode3Btn').addEventListener('click', () => setSimulationMode('plicae_villi'));
     document.getElementById('mode4Btn').addEventListener('click', () => setSimulationMode('plicae_villi_micro'));
-
     document.getElementById('prevBtn').addEventListener('click', () => alert('這是上一頁'));
     document.getElementById('homeBtn').addEventListener('click', () => alert('這是回到首頁'));
     document.getElementById('nextBtn').addEventListener('click', () => alert('恭喜你答對了！即將前往下一頁！'));
 
-    // Also fixed a bug in the auto-recorder
+    setSimulationMode('flat');
+});
