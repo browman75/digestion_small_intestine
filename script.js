@@ -255,9 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mode3Btn').addEventListener('click', () => setSimulationMode('plicae_villi'));
     document.getElementById('mode4Btn').addEventListener('click', () => setSimulationMode('plicae_villi_micro'));
 
-    document.getElementById('prevBtn').addEventListener('click', () => alert('這是上一頁'));
-    document.getElementById('homeBtn').addEventListener('click', () => alert('這是回到首頁'));
-    document.getElementById('nextBtn').addEventListener('click', () => alert('恭喜你答對了！即將前往下一頁！'));
+    document.getElementById('prevBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/7_1_bile.html');
+    document.getElementById('homeBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/');
+    document.getElementById('nextBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/7_2_absorb.html';);
 
     setSimulationMode('flat');
 });
