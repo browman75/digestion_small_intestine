@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('prevBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/7_1_bile.html');
     document.getElementById('homeBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/');
-    document.getElementById('nextBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/7_2_absorb.html';);
+    document.getElementById('nextBtn').addEventListener('click', () => window.location.href = 'https://browman75.github.io/digestion/7_2_absorb.html');
 
     setSimulationMode('flat');
 });
