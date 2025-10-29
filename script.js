@@ -110,11 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor() {
             this.radius = GLUCOSE_RADIUS;
             this.x = Math.random() * canvas.width;
-            // 分子從上方進入，確保不會生成在牆壁內部
-            // 最高的牆壁頂點約在 BASE_WALL_Y - (PLICAE_PARAMS[0] + VILLI_PARAMS[0] + MICROVILLI_PARAMS[0])
-            // 為了簡化，生成在頂部一定範圍內
-            this.y = Math.random() * (BASE_WALL_Y - (PLICAE_PARAMS[0] + VILLI_PARAMS[0] + MICROVILLI_PARAMS[0]) - 50); 
-            if (this.y < 0) this.y = Math.random() * 50; // 避免負值
+
+            // (修正) 讓分子在頂部 100 像素的寬闊區域隨機生成
+            this.y = Math.random() * 100; 
+            if (this.y < this.radius) this.y = this.radius; // 避免穿出頂部
             
             this.vx = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
             this.vy = (Math.random() - 0.5) * GLUCOSE_SPEED * 2;
