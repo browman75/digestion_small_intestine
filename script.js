@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopSimulation();
             document.getElementById(`result-${modeId}`).textContent = absorbedCount;
             runTestForMode(index + 1);
-        }, 10000);
+        }, 8000);
     }
 
     startRecordBtn.addEventListener('click', () => {
