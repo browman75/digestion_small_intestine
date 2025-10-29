@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Simulation Constants ---
     const BASE_WALL_Y = 300; // 小腸壁的基礎 Y 座標，所有褶皺都從此處向上凸起
-    const NUM_GLUCOSE = 5000;
+    const NUM_GLUCOSE = 300;
     const GLUCOSE_RADIUS = 0.5;
     const GLUCOSE_SPEED = 0.8;
 
